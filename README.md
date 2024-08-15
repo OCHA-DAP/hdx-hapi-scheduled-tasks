@@ -13,3 +13,10 @@ And then install the `requirements.txt`
 ```shell
 pip install -r requirements.txt
 ```
+
+The following environment variables need to be defined:
+```
+HAPI_BASE_URL
+HDX_PACKAGE_SEARCH_URL
+HDX_BLUE_KEY
+```
