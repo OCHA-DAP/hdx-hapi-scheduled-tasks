@@ -1,6 +1,11 @@
 import json
 import time
+import os
+import requests
 from urllib import request
+
+HAPI_BASE_URL = os.getenv("HAPI_BASE_URL")
+HDX_BLUE_KEY = os.getenv("HDX_BLUE_KEY")
 
 
 def get_app_identifier(
@@ -12,7 +17,6 @@ def get_app_identifier(
         f"https://{hapi_site}.humdata.org/api/v1/"
         f"encode_app_identifier?application={app_name}&email={email_address}"
     )
-    print(app_identifier_url, flush=True)
     app_identifier_response = fetch_data_from_hapi(app_identifier_url)
 
     app_identifier = app_identifier_response["encoded_app_identifier"]
@@ -74,3 +78,49 @@ def fetch_data_from_hapi(query_url, limit=1000):
 
     print(f"Download took {time.time()-t0:0.2f} seconds", flush=True)
     return results
+
+
+def fetch_data_from_ckan_api(query_url, query):
+    headers = {
+        "Authorization": HDX_BLUE_KEY,
+        "Content-Type": "application/json",
+    }
+
+    start = 0
+    if "start" not in query.keys():
+        query["start"] = start
+    if "rows" not in query.keys():
+        query["rows"] = 100
+    payload = json.dumps(query)
+    i = 1
+    print(f"{i}. Querying {query_url} with {payload}", flush=True)
+    response = requests.request("POST", query_url, headers=headers, data=payload)
+    full_response_json = response.json()
+    n_expected_result = full_response_json["result"]["count"]
+    # print(full_response_json, flush=True)
+
+    result_length = len(full_response_json["result"]["results"])
+
+    if result_length != n_expected_result:
+        while result_length != 0:
+            i += 1
+            start += 100
+            query["start"] = start
+            payload = json.dumps(query)
+            print(f"{i}. Querying {query_url} with {payload}", flush=True)
+            new_response = requests.request(
+                "POST", query_url, headers=headers, data=payload
+            )
+            result_length = len(new_response.json()["result"]["results"])
+            full_response_json["result"]["results"].extend(
+                new_response.json()["result"]["results"]
+            )
+    else:
+        print(
+            f"CKAN API returned all results ({result_length}) on first page of 100",
+            flush=True,
+        )
+
+    assert n_expected_result == len(full_response_json["result"]["results"])
+
+    return full_response_json
