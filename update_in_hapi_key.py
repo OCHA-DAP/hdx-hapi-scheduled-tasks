@@ -21,7 +21,8 @@ def main():
     # 1. from HAPI api get a list of all HDX resource IDs
     hapi_resource_ids = get_hapi_resource_ids()
     # print(hapi_resource_ids, flush=True)
-    # 2. from HDX api (via package_search) get a list of all resource IDs in CKAN that are marked as being in HAPI
+    # 2. from HDX api (via package_search) get a list of all resource IDs in CKAN that are
+    # marked as being in HAPI
     already_in_hapi_resource_ids = get_hdx_resources_with_in_hapi_flag()
 
     # 3. compare the 2 lists :
@@ -103,7 +104,7 @@ def get_hdx_resources_with_in_hapi_flag():
                     already_in_hapi_resource_ids.add(resource["id"])
 
     print(
-        f"{len(already_in_hapi_resource_ids)} resources already marked as 'in_hapi'",
+        f"Found {len(already_in_hapi_resource_ids)} resources already marked as 'in_hapi'",
         flush=True,
     )
 
@@ -118,7 +119,7 @@ def get_hapi_resource_ids():
         email_address="ian.hopkinson@humdata.org",
         app_name="HDXINTERNAL_hapi_scheduled",
     )
-    print_banner("Fetching data from HAPI")
+    print_banner("Fetching data from HAPI resources endpoint")
     query_url = (
         f"{HAPI_BASE_URL}api/v1/{theme}?"
         f"output_format=json"
@@ -130,6 +131,9 @@ def get_hapi_resource_ids():
     print(f"Found {len(hapi_results)} resources in HAPI", flush=True)
     # for row in hapi_results:
     #     print(row["dataset_hdx_stub"], row["name"], row["resource_hdx_id"], flush=True)
+    # for record in hapi_results:
+    #     if record["resource_hdx_id"] == "3c9abf00-42ed-4676-a7d2-a85b3999a499":
+    #         print(json.dumps(record, indent=4), flush=True)
 
     hapi_resource_ids = {x["resource_hdx_id"] for x in hapi_results}
     return hapi_resource_ids
