@@ -11,7 +11,6 @@ from common.util import (
 )
 
 HAPI_BASE_URL = os.getenv("HAPI_BASE_URL")
-HDX_PACKAGE_SEARCH_URL = os.getenv("HDX_PACKAGE_SEARCH_URL")
 HDX_BLUE_KEY = os.getenv("HDX_BLUE_KEY")
 HDX_BASE_URL = "https://blue.demo.data-humdata-org.ahconu.org/"
 

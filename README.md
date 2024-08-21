@@ -1,5 +1,6 @@
 # hdx-hapi-scheduled-tasks
 
+This repo checks the HDX HAPI resources endpoint for a list of resources used to populate HDX HAPI and then writes the `in_hapi` flag to those resources in HDX.
 
 ## Contributing
 
@@ -17,6 +18,6 @@ pip install -r requirements.txt
 The following environment variables need to be defined:
 ```
 HAPI_BASE_URL
-HDX_PACKAGE_SEARCH_URL
+HDX_BASE_URL
 HDX_BLUE_KEY
 ```
