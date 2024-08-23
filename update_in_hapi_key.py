@@ -26,6 +26,9 @@ def process():
         "Synchronising resources in HAPI with in_hapi flags on HDX",
         include_timestamp=True,
     )
+    logger.info(f"HAPI_BASE_URL: {HAPI_BASE_URL}")
+    logger.info(f"HDX_BASE_URL: {HDX_BASE_URL}")
+
     # 1. from HAPI api get a list of all HDX resource IDs
     hapi_resource_ids = get_hapi_resource_ids()
     # 2. from HDX api (via package_search) get a list of all resource IDs in CKAN that are

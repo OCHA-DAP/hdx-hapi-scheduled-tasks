@@ -1,5 +1,4 @@
 import json
-import time
 import logging
 import os
 import requests
@@ -7,7 +6,7 @@ import requests
 from typing import List, Union
 
 HAPI_BASE_URL = os.getenv("HAPI_BASE_URL")
-HDX_BLUE_KEY = os.getenv("HDX_BLUE_KEY")
+HDX_API_KEY = os.getenv("HDX_BLUE_KEY", os.getenv("HDX_API_KEY"))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -69,7 +68,7 @@ def fetch_data_from_hapi(query_url: str, limit: int = 1000) -> Union[dict, List[
 
 def fetch_data_from_ckan_api(query_url: str, query: dict) -> dict:
     headers = {
-        "Authorization": HDX_BLUE_KEY,
+        "Authorization": HDX_API_KEY,
         "Content-Type": "application/json",
     }
 
