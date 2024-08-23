@@ -81,7 +81,7 @@ def fetch_data_from_ckan_api(query_url: str, query: dict) -> dict:
     i = 1
     logger.info(f"{i}. Querying {query_url} with {payload}")
     response = requests.request("POST", query_url, headers=headers, data=payload)
-    print(response, flush=True)
+    print(response.content, flush=True)
     full_response_json = response.json()
     n_expected_result = full_response_json["result"]["count"]
 
