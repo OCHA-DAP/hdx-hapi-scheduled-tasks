@@ -1,17 +1,23 @@
 import json
 import time
+import logging
 import os
 import requests
+
+from typing import List, Union
 
 HAPI_BASE_URL = os.getenv("HAPI_BASE_URL")
 HDX_BLUE_KEY = os.getenv("HDX_BLUE_KEY")
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def get_app_identifier(
-    hapi_site,
-    email_address="ian.hopkinson%40humdata.org",
+    hapi_site: str,
+    email_address: str = "ian.hopkinson%40humdata.org",
     app_name="HDXINTERNAL_hapi_scheduled",
-):
+) -> str:
     app_identifier_url = (
         f"https://{hapi_site}.humdata.org/api/v1/"
         f"encode_app_identifier?application={app_name}&email={email_address}"
@@ -22,7 +28,7 @@ def get_app_identifier(
     return app_identifier
 
 
-def fetch_data_from_hapi(query_url, limit=1000):
+def fetch_data_from_hapi(query_url: str, limit: int = 1000) -> Union[dict, List[dict]]:
     """
     Fetch data from the provided query_url with pagination support.
 
@@ -42,15 +48,13 @@ def fetch_data_from_hapi(query_url, limit=1000):
     idx = 0
     results = []
 
-    t0 = time.time()
     while True:
         offset = idx * limit
         url = f"{query_url}&offset={offset}&limit={limit}"
 
-        response = requests.request("GET", url)
-        print(f"Getting results {offset} to {offset+limit-1}")
-        print(f"{url}", flush=True)
+        logger.info(f"Getting results {offset} to {offset+limit-1}")
 
+        response = requests.request("GET", url)
         json_response = response.json()
 
         results.extend(json_response["data"])
@@ -60,11 +64,10 @@ def fetch_data_from_hapi(query_url, limit=1000):
             break
         idx += 1
 
-    print(f"Download took {time.time()-t0:0.2f} seconds", flush=True)
     return results
 
 
-def fetch_data_from_ckan_api(query_url, query):
+def fetch_data_from_ckan_api(query_url: str, query: dict) -> dict:
     headers = {
         "Authorization": HDX_BLUE_KEY,
         "Content-Type": "application/json",
@@ -77,7 +80,7 @@ def fetch_data_from_ckan_api(query_url, query):
         query["rows"] = 100
     payload = json.dumps(query)
     i = 1
-    print(f"{i}. Querying {query_url} with {payload}", flush=True)
+    logger.info(f"{i}. Querying {query_url} with {payload}")
     response = requests.request("POST", query_url, headers=headers, data=payload)
     full_response_json = response.json()
     n_expected_result = full_response_json["result"]["count"]
@@ -90,7 +93,7 @@ def fetch_data_from_ckan_api(query_url, query):
             start += 100
             query["start"] = start
             payload = json.dumps(query)
-            print(f"{i}. Querying {query_url} with {payload}", flush=True)
+            logger.info(f"{i}. Querying {query_url} with {payload}")
             new_response = requests.request(
                 "POST", query_url, headers=headers, data=payload
             )
@@ -99,9 +102,8 @@ def fetch_data_from_ckan_api(query_url, query):
                 new_response.json()["result"]["results"]
             )
     else:
-        print(
-            f"CKAN API returned all results ({result_length}) on first page of 100",
-            flush=True,
+        logger.info(
+            f"CKAN API returned all results ({result_length}) on first page of 100"
         )
 
     assert n_expected_result == len(full_response_json["result"]["results"])

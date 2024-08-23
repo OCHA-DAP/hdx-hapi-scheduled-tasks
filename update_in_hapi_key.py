@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import datetime
 import json
+import logging
 import os
+import time
 import requests
 from common.util import (
     fetch_data_from_hapi,
@@ -11,61 +14,61 @@ from common.util import (
 )
 
 HAPI_BASE_URL = os.getenv("HAPI_BASE_URL")
-HDX_BLUE_KEY = os.getenv("HDX_BLUE_KEY")
-HDX_BASE_URL = "https://blue.demo.data-humdata-org.ahconu.org/"
+HDX_API_KEY = os.getenv("HDX_BLUE_KEY", os.getenv("HDX_API_KEY"))
+HDX_BASE_URL = os.getenv("HDX_BASE_URL")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def main():
-    print_banner("Synchronising resources in HAPI with in_hapi flags on HDX")
+def process():
+    print_banner(
+        "Synchronising resources in HAPI with in_hapi flags on HDX",
+        include_timestamp=True,
+    )
     # 1. from HAPI api get a list of all HDX resource IDs
     hapi_resource_ids = get_hapi_resource_ids()
-    # print(hapi_resource_ids, flush=True)
     # 2. from HDX api (via package_search) get a list of all resource IDs in CKAN that are
     # marked as being in HAPI
     already_in_hapi_resource_ids = get_hdx_resources_with_in_hapi_flag()
 
-    # 3. compare the 2 lists :
+    # 3. Process the two lists (actually sets):
     # a. add the flag to those resources that are in HAPI
-    # . remove the flag from the CKAN resources that are no longer in HAPI
+    # b. remove the flag from the CKAN resources that are no longer in HAPI
     update_in_hapi_flag_in_hdx(hapi_resource_ids, already_in_hapi_resource_ids)
 
 
-def update_in_hapi_flag_in_hdx(hapi_resource_ids, already_in_hapi_resource_ids):
+def update_in_hapi_flag_in_hdx(
+    hapi_resource_ids: set, already_in_hapi_resource_ids: set
+):
+    t0 = time.time()
     print_banner("update_in_hapi_flag_in_hdx")
-    print(f"Number of resources in HAPI: {len(hapi_resource_ids)}", flush=True)
-    print(
-        f"Number of resources with in_hapi flag in HDX: {len(already_in_hapi_resource_ids)}",
-        flush=True,
+    logger.info(f"Number of resources in HAPI: {len(hapi_resource_ids)}")
+    logger.info(
+        f"Number of resources with in_hapi flag in HDX: {len(already_in_hapi_resource_ids)}"
     )
     resource_ids_to_add = hapi_resource_ids.difference(already_in_hapi_resource_ids)
     resource_ids_to_remove = already_in_hapi_resource_ids.difference(hapi_resource_ids)
 
-    print(f"Number of resource_ids_to_add = {len(resource_ids_to_add)}", flush=True)
-    print(
-        f"Number of resource_ids_to_remove = {len(resource_ids_to_remove)}", flush=True
-    )
+    logger.info(f"Number of resource_ids_to_add = {len(resource_ids_to_add)}")
+    logger.info(f"Number of resource_ids_to_remove = {len(resource_ids_to_remove)}")
     mark_resource_url = f"{HDX_BASE_URL}api/action/hdx_mark_resource_in_hapi"
-    print(mark_resource_url, flush=True)
     headers = {
-        "Authorization": HDX_BLUE_KEY,
+        "Authorization": HDX_API_KEY,
         "Content-Type": "application/json",
     }
 
-    state = "yes"
-    for resource_set in [resource_ids_to_add, resource_ids_to_remove]:
+    for state, resource_set in [
+        ("yes", resource_ids_to_add),
+        ("no-data", resource_ids_to_remove),
+    ]:
         if state == "yes":
-            print(
-                f"Adding `in_hapi` flags to {len(resource_set)} resources", flush=True
-            )
+            logger.info(f"Adding `in_hapi` flags to {len(resource_set)} resources")
         elif state == "no-data":
-            print(
-                f"Removing `in_hapi` flags from {len(resource_set)} resources",
-                flush=True,
-            )
+            logger.info(f"Removing `in_hapi` flags from {len(resource_set)} resources")
 
+        logger.info("index, resource_id, success, in_hapi value, error message")
         for i, resource_id in enumerate(resource_set):
-            # if i > 1:
-            #     break
             payload = json.dumps(
                 {
                     "id": resource_id,
@@ -76,25 +79,36 @@ def update_in_hapi_flag_in_hdx(hapi_resource_ids, already_in_hapi_resource_ids):
             response = requests.request(
                 "POST", mark_resource_url, headers=headers, data=payload
             )
-            print(
-                f"{i}. {resource_id}, {response.json()['success']}, {state}", flush=True
-            )
             if not response.json()["success"]:
-                print(response.json(), flush=True)
-        state = "no-data"
+                logger.info(
+                    f"{i}. {resource_id}, {response.json()['success']}, {state}, "
+                    f"{response.json()['error']['message']}"
+                )
+            else:
+                logger.info(
+                    f"{i}. {resource_id}, {response.json()['success']}, {state}"
+                )
+
+    logger.info(
+        f"{len(resource_ids_to_add)+len(resource_ids_to_remove)} add/remove operations "
+        f"took {time.time() - t0:0.2f} seconds"
+    )
 
 
-def get_hdx_resources_with_in_hapi_flag():
+def get_hdx_resources_with_in_hapi_flag() -> set:
+    t0 = time.time()
     print_banner("get_hdx_resources_with_in_hapi_flag")
     package_search_url = f"{HDX_BASE_URL}api/action/package_search"
     query = {
-        "fq": 'capacity:public +state:(active) +dataset_type: (dataset OR requestdata-metadata-only) -extras_archived:"true" +res_extras_in_hapi: [* TO *]'
+        "fq": (
+            "capacity:public +state:(active) "
+            "+dataset_type: (dataset OR requestdata-metadata-only) "
+            '-extras_archived:"true" +res_extras_in_hapi: [* TO *]'
+        )
     }
     response = fetch_data_from_ckan_api(package_search_url, query)
 
-    # print(response.json(), flush=True)
     datasets_with_in_hapi = response["result"]["results"]
-    # print(json.dumps(datasets_with_in_hapi[0], indent=4), flush=True)
     already_in_hapi_resource_ids = set()
     if len(datasets_with_in_hapi) != 0:
         for dataset in datasets_with_in_hapi:
@@ -102,15 +116,18 @@ def get_hdx_resources_with_in_hapi_flag():
                 if resource.get("in_hapi", "no").lower() == "yes":
                     already_in_hapi_resource_ids.add(resource["id"])
 
-    print(
-        f"Found {len(already_in_hapi_resource_ids)} resources already marked as 'in_hapi'",
-        flush=True,
+    logger.info(
+        (
+            f"Found {len(already_in_hapi_resource_ids)} resources already marked as 'in_hapi', "
+            f"took {time.time() - t0:0.2f} seconds"
+        )
     )
 
     return already_in_hapi_resource_ids
 
 
-def get_hapi_resource_ids():
+def get_hapi_resource_ids() -> set:
+    t0 = time.time()
     print_banner("Creating app identifier")
     theme = "metadata/resource"
     hapi_app_identifier = get_app_identifier(
@@ -127,23 +144,25 @@ def get_hapi_resource_ids():
 
     hapi_results = fetch_data_from_hapi(query_url, limit=1000)
 
-    print(f"Found {len(hapi_results)} resources in HAPI", flush=True)
-    # for row in hapi_results:
-    #     print(row["dataset_hdx_stub"], row["name"], row["resource_hdx_id"], flush=True)
-    # for record in hapi_results:
-    #     if record["resource_hdx_id"] == "3c9abf00-42ed-4676-a7d2-a85b3999a499":
-    #         print(json.dumps(record, indent=4), flush=True)
-
     hapi_resource_ids = {x["resource_hdx_id"] for x in hapi_results}
+    logger.info(
+        f"Found {len(hapi_results)} resources in HAPI, took {time.time()-t0:0.2f} seconds"
+    )
     return hapi_resource_ids
 
 
-def print_banner(message: str):
-    width = len(message)
-    print((width + 4) * "*", flush=True)
-    print(f"* {message:<{width}} *", flush=True)
-    print((width + 4) * "*", flush=True)
+def print_banner(message: str, include_timestamp: bool = False):
+    timestamp = f"Invoked at: {datetime.datetime.now().isoformat()}"
+    if include_timestamp:
+        width = max(len(message), len(timestamp))
+    else:
+        width = len(message)
+    logger.info((width + 4) * "*")
+    logger.info(f"* {message:<{width}} *")
+    if include_timestamp:
+        logger.info(f"* {timestamp:<{width}} *")
+    logger.info((width + 4) * "*")
 
 
 if __name__ == "__main__":
-    main()
+    process()

@@ -19,5 +19,5 @@ The following environment variables need to be defined:
 ```
 HAPI_BASE_URL
 HDX_BASE_URL
-HDX_BLUE_KEY
+HDX_API_KEY
 ```
