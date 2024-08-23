@@ -21,6 +21,6 @@ jobs:
       - name: Run main script
         run: python update_in_hapi_key.py
         env:
-          HDX_BASE_URL: ${{ env.HDX_BASE_URL }}
-          HAPI_BASE_URL: ${{ env.HAPI_BASE_URL }}
+          HDX_BASE_URL: ${{ vars.HDX_BASE_URL }}
+          HAPI_BASE_URL: ${{ vars.HAPI_BASE_URL }}
           HDX_API_KEY: ${{ secrets.HDX_API_KEY }}
