@@ -28,6 +28,10 @@ def process():
     )
     logger.info(f"HAPI_BASE_URL: {HAPI_BASE_URL}")
     logger.info(f"HDX_BASE_URL: {HDX_BASE_URL}")
+    if HDX_API_KEY is not None:
+        logger.info(f"HDX_API_KEY: [censored]{HDX_API_KEY[-10:]}")
+    else:
+        logger.info("HDX_API_KEY: None")
 
     # 1. from HAPI api get a list of all HDX resource IDs
     hapi_resource_ids = get_hapi_resource_ids()
