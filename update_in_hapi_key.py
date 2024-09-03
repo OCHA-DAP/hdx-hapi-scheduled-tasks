@@ -86,6 +86,7 @@ def update_in_hapi_flag_in_hdx(
             response = requests.request(
                 "POST", mark_resource_url, headers=headers, data=payload
             )
+            print(response, flush=True)
             if not response.json()["success"]:
                 logger.info(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}, "
