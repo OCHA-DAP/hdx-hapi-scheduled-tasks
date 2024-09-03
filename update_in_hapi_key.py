@@ -86,7 +86,13 @@ def update_in_hapi_flag_in_hdx(
             response = requests.request(
                 "POST", mark_resource_url, headers=headers, data=payload
             )
-            print(response, flush=True)
+
+            if response.status_code == 404:
+                print(response.json(), flush=True)
+            elif response.status_code == 429:
+                print("Too many requests, resolve by re-running", flush=True)
+                return
+
             if not response.json()["success"]:
                 logger.info(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}, "
