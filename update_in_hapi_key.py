@@ -89,8 +89,16 @@ def update_in_hapi_flag_in_hdx(
 
             if response.status_code == 404:
                 print(response.json(), flush=True)
+                print(
+                    "Status code 404: "
+                    f"Resource may be missing or API key invalid from {HDX_BASE_URL}",
+                    flush=True,
+                )
             elif response.status_code == 429:
-                print("Too many requests, resolve by re-running", flush=True)
+                print(
+                    "Status code 429: Too many requests, resolve by re-running",
+                    flush=True,
+                )
                 return
 
             if not response.json()["success"]:
