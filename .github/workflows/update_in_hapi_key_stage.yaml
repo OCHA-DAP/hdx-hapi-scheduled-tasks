@@ -3,7 +3,7 @@ name: Trigger update in_hapi script (stage)
 on:
   workflow_dispatch:
   schedule:
-     - cron: '0 8 * * *'
+     - cron: '0 6 * * *'
 
 jobs:
   trigger_in_hapi:
