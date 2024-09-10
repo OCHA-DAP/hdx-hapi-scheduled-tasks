@@ -60,6 +60,7 @@ def update_in_hapi_flag_in_hdx(
     logger.info(f"Number of resource_ids_to_add = {len(resource_ids_to_add)}")
     logger.info(f"Number of resource_ids_to_remove = {len(resource_ids_to_remove)}")
     mark_resource_url = f"{HDX_BASE_URL}api/action/hdx_mark_resource_in_hapi"
+    logger.info(f"Mark resource URL = {mark_resource_url}")
     headers = {
         "Authorization": HDX_API_KEY,
         "Content-Type": "application/json",
@@ -106,7 +107,6 @@ def update_in_hapi_flag_in_hdx(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}, "
                     f"{response.json()['error']['message']}"
                 )
-                print(response.json(), flush=True)
             else:
                 logger.info(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}"
