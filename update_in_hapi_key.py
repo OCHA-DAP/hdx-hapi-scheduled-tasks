@@ -107,6 +107,12 @@ def update_in_hapi_flag_in_hdx(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}, "
                     f"{response.json()['error']['message']}"
                 )
+                if response.json()["error"]["message"] == "Access denied":
+                    raise PermissionError(
+                        f"Access denied to {mark_resource_url} with API key "
+                        f"ending [censored]{HDX_API_KEY[-10:]}"
+                    )
+
             else:
                 logger.info(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}"
