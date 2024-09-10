@@ -106,6 +106,7 @@ def update_in_hapi_flag_in_hdx(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}, "
                     f"{response.json()['error']['message']}"
                 )
+                print(response.json(), flush=True)
             else:
                 logger.info(
                     f"{i}. {resource_id}, {response.json()['success']}, {state}"
