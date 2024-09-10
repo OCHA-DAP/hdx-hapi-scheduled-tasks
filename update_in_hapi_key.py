@@ -95,6 +95,10 @@ def update_in_hapi_flag_in_hdx(
                     f"Resource may be missing or API key invalid from {HDX_BASE_URL}",
                     flush=True,
                 )
+                raise PermissionError(
+                    f"'Not found' error for resource_id: {resource_id} on {mark_resource_url} "
+                    f"with API key ending [censored]{HDX_API_KEY[-10:]}"
+                )
             elif response.status_code == 429:
                 print(
                     "Status code 429: Too many requests, resolve by re-running",
