@@ -1,4 +1,4 @@
-name: Trigger update in_hapi script
+name: Trigger update in_hapi script (prod)
 
 on:
   workflow_dispatch:
@@ -21,6 +21,6 @@ jobs:
       - name: Run main script
         run: python update_in_hapi_key.py
         env:
-          HDX_BASE_URL: ${{ vars.HDX_BASE_URL }}
+          HDX_BASE_URL: https://data.humdata.org/
           HAPI_BASE_URL: ${{ vars.HAPI_BASE_URL }}
-          HDX_API_KEY: ${{ secrets.HDX_API_KEY }}
+          HDX_API_KEY: ${{ secrets.HDX_PROD_API_TOKEN }}
