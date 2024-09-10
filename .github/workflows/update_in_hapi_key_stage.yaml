@@ -1,0 +1,26 @@
+name: Trigger update in_hapi script (stage)
+
+on:
+  workflow_dispatch:
+  schedule:
+     - cron: '0 8 * * *'
+
+jobs:
+  trigger_in_hapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run main script
+        run: python update_in_hapi_key.py
+        env:
+          HDX_BASE_URL: https://stage.data-humdata-org.ahconu.org/
+          HAPI_BASE_URL: ${{ vars.HAPI_BASE_URL }}
+          HDX_API_KEY: ${{ secrets.HDX_STAGE_API_TOKEN }}
