@@ -24,6 +24,12 @@ jobs:
           HDX_BASE_URL: https://stage.data-humdata-org.ahconu.org/
           HAPI_BASE_URL: ${{ vars.HAPI_BASE_URL }}
           HDX_API_KEY: ${{ secrets.HDX_STAGE_API_TOKEN }}
+      - name: Send slack message
+        # if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"[HAPI flag] update failed! Check the run details: https://github.com/OCHA-DAP/hdx-hapi-scheduled-tasks/actions/runs/${{ github.run_id }}\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
 
   workflow-keepalive:
     if: github.event_name == 'schedule'
